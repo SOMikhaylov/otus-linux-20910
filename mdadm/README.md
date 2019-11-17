@@ -116,10 +116,10 @@ parted -s /dev/md0 mklabel gpt
 создание 5 партиций
 ```
 parted /dev/md0 mkpart primary ext4 0% 20%
-parted /dev/md0 mkpart primary ext4 0% 40%
-parted /dev/md0 mkpart primary ext4 0% 60%
-parted /dev/md0 mkpart primary ext4 0% 80%
-parted /dev/md0 mkpart primary ext4 0% 100%
+parted /dev/md0 mkpart primary ext4 20% 40%
+parted /dev/md0 mkpart primary ext4 40% 60%
+parted /dev/md0 mkpart primary ext4 60% 80%
+parted /dev/md0 mkpart primary ext4 80% 100%
 ```
 создание на них файлов системы
 ```
@@ -136,3 +136,75 @@ for i in $(seq 1 5); do mount /dev/md0p$i /raid/part$i; done
 скрипт [mdadm.sh](scripts/mdadm.sh) добавлен в provision [Vagrantfile](Vagrantfile)
 
 ---
+# **Задание с ** : перенесети работающую систему с одним диском на RAID 1**
+создана ВМ с 2 дополнительными дисками
+```
+                :sata1 => {
+                        :dfile => './sata1.vdi',
+                        :size => 10240,
+                        :port => 1
+                },
+                :sata2 => {
+                        :dfile => './sata2.vdi',
+                        :size => 10240,
+                        :port => 2
+                },
+```
+```
+[root@otuslinux ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sda      8:0    0  40G  0 disk 
+`-sda1   8:1    0  40G  0 part /
+sdb      8:16   0  10G  0 disk 
+sdc      8:32   0  10G  0 disk 
+```
+создан RAID 1
+```
+mdadm --zero-superblock --force /dev/sd{b,c}
+mdadm --create  /dev/md1 -l 1 -n 2 /dev/sd{b,c}
+```
+cоздан mdadm.conf
+```
+echo "DEVICE partitions" > /etc/mdadm.conf
+mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm.conf
+```
+создан раздел и смонтирован в mnt
+```
+parted -s /dev/md1 mklabel msdos
+parted /dev/md1 mkpart primary xfs 0% 100%
+mkfs.xfs /dev/md1p1
+mount /dev/md1p1 /mnt
+```
+скопирована система с помощью tar
+```
+tar -cpv / --exclude /mnt --exclude /dev --exclude /vagrant --exclude /sys --exclude /proc --exclude /tmp --exclude /run | tar -x -C /mnt/
+```
+UUID раздела
+```
+[root@otuslinux ~]# blkid /dev/md1p1
+/dev/md1p1: UUID="d528c986-013e-4d65-8cbf-3ee590ba91fe" TYPE="xfs" PARTLABEL="primary" PARTUUID="2133b3a5-2091-4b7b-a99c-8842525878b8"
+```
+изменен UUID для корневого раздела в `/mnt/etc/fstab`
+```
+UUID=d528c986-013e-4d65-8cbf-3ee590ba91fe /   xfs     defaults        0 0
+/swapfile none swap defaults 0 0
+```
+перемонтированы /dev /sys /proc
+```
+mkdir -p /mnt/{dev,sys,proc}
+mount --bind /sys /mnt/sys
+mount --bind /proc /mnt/proc
+mount --bind /dev /mnt/dev
+```
+установлен загрузчик
+```
+chroot /mnt
+grub2-install /dev/md1
+grub2-mkconfig -o /boot/grub2/grub.cfg
+exit 
+```
+изменен загрузочный флаг
+```
+parted /dev/sda set 1 boot off
+parted /dev/md1 set 1 boot on
+```
