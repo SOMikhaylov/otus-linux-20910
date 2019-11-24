@@ -71,7 +71,7 @@ Consistency Policy : resync
 ---
 
 # **Конфигурационный файл**
-создае конфигурационный файл mdadm.conf
+создан конфигурационный файл mdadm.conf
 ```
 mdadm --detail --scan --verbose
 echo "DEVICE partitions" > /etc/mdadm.conf
@@ -131,80 +131,109 @@ mkdir -p /raid/part{1,2,3,4,5}
 for i in $(seq 1 5); do mount /dev/md0p$i /raid/part$i; done
 ```
 ---
-# Задание со * : Vagrantfile, который сразу собирает систему с подключенным рейдом
+# **Задание со * : Vagrantfile, который сразу собирает систему с подключенным рейдом**
 
 скрипт [mdadm.sh](scripts/mdadm.sh) добавлен в provision [Vagrantfile](Vagrantfile)
 
 ---
 # **Задание с ** : перенесети работающую систему с одним диском на RAID 1**
-создана ВМ с 2 дополнительными дисками
+создана ВМ с 2-мя дополнительными дисками
 ```
-                :sata1 => {
-                        :dfile => './sata1.vdi',
-                        :size => 10240,
-                        :port => 1
-                },
-                :sata2 => {
-                        :dfile => './sata2.vdi',
-                        :size => 10240,
-                        :port => 2
-                },
+      :sata1 => {
+        :dfile => "../sata1.vdi",
+        :size => 4096,
+        :port => 1,
+      },
+      :sata2 => {
+        :dfile => "../sata2.vdi",
+        :size => 4096,
+        :port => 2,
+      },
 ```
+скопирована таблица разделов 
 ```
-[root@otuslinux ~]# lsblk
-NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
-sda      8:0    0  40G  0 disk 
-`-sda1   8:1    0  40G  0 part /
-sdb      8:16   0  10G  0 disk 
-sdc      8:32   0  10G  0 disk 
+sfdisk -d /dev/sda | sfdisk --force /dev/sdb
+sfdisk -d /dev/sda | sfdisk --force /dev/sdc
+```
+установлен загрузчик
+```
+grub2-install /dev/sdb
+grub2-install /dev/sdc
 ```
 создан RAID 1
 ```
-mdadm --zero-superblock --force /dev/sd{b,c}
-mdadm --create  /dev/md1 -l 1 -n 2 /dev/sd{b,c}
+mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb1 /dev/sdc1 --metadata=0.90
 ```
-cоздан mdadm.conf
+раздел помечен тэгом raid autodetect
+```
+sfdisk --change-id /dev/sdb 1 fd
+sfdisk --change-id /dev/sdc 1 fd
+```
+произведена перезагрузка, состояние после перезагрузки:
+```
+[root@otuslinux ~]# lsblk 
+NAME      MAJ:MIN RM SIZE RO TYPE  MOUNTPOINT
+sda         8:0    0  40G  0 disk  
+└─sda1      8:1    0  40G  0 part  /
+sdb         8:16   0   4G  0 disk  
+└─md0       9:0    0   4G  0 raid1 
+  └─md0p1 259:0    0   4G  0 md    
+sdc         8:32   0   4G  0 disk  
+└─md0       9:0    0   4G  0 raid1 
+  └─md0p1 259:0    0   4G  0 md 
+```
+создана файлоловая система и примонтирован раздел
+```
+mkfs.xfs /dev/md0p1
+mount /dev/md0p1 /mnt
+```
+создан конфигурационный файл mdadm.conf
 ```
 echo "DEVICE partitions" > /etc/mdadm.conf
 mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm.conf
 ```
-создан раздел и смонтирован в mnt
+скопирована система с помощью rsync
 ```
-parted -s /dev/md1 mklabel msdos
-parted /dev/md1 mkpart primary xfs 0% 100%
-mkfs.xfs /dev/md1p1
-mount /dev/md1p1 /mnt
+rsync -aAXv --exclude={"/dev/*","/proc/*","/sys/*","/tmp/*","/vagrant/*","/mnt/*"} / /mnt/
 ```
-скопирована система с помощью tar
+смонтирован /dev/ /proc /sys
 ```
-tar -cpv / --exclude /mnt --exclude /dev --exclude /vagrant --exclude /sys --exclude /proc --exclude /tmp --exclude /run | tar -x -C /mnt/
+mount -o bind /dev/ /mnt/dev
+mount -o bind /proc/ /mnt/proc
+mount -o bind /sys/ /mnt/sys
 ```
-UUID раздела
+измененен  `/mnt/etc/fstab` указан UUID раздела с RAID
 ```
-[root@otuslinux ~]# blkid /dev/md1p1
-/dev/md1p1: UUID="d528c986-013e-4d65-8cbf-3ee590ba91fe" TYPE="xfs" PARTLABEL="primary" PARTUUID="2133b3a5-2091-4b7b-a99c-8842525878b8"
-```
-изменен UUID для корневого раздела в `/mnt/etc/fstab`
-```
-UUID=d528c986-013e-4d65-8cbf-3ee590ba91fe /   xfs     defaults        0 0
+UUID=d9d7d70e-de14-4aa9-ad8b-9d31dc69a83b /   xfs    defaults        0 0 
 /swapfile none swap defaults 0 0
 ```
-перемонтированы /dev /sys /proc
-```
-mkdir -p /mnt/{dev,sys,proc}
-mount --bind /sys /mnt/sys
-mount --bind /proc /mnt/proc
-mount --bind /dev /mnt/dev
-```
-установлен загрузчик
+создан новый initramfs
 ```
 chroot /mnt
-grub2-install /dev/md1
+mv /boot/initramfs-$(uname -r).img /boot/initramfs-$(uname -r).img.bak
+dracut -f -v --mdadmconf --regenerate-all
+exit
+```
+в `/mnt/etc/defautl/grub ` добавлен параметр
+```
+GRUB_CMDLINE_LINUX="... rd.auto=1 ..."
+```
+обновлен загрузчик
+```
 grub2-mkconfig -o /boot/grub2/grub.cfg
-exit 
+grub2-install /dev/sdb
+grub2-install /dev/sdc
 ```
-изменен загрузочный флаг
+- произведено выключение ВМ
+- отлючен диск с системой без RAID
+- загрузка с RAID 1 прошла успешно
 ```
-parted /dev/sda set 1 boot off
-parted /dev/md1 set 1 boot on
+[root@otuslinux ~]# lsblk 
+NAME      MAJ:MIN RM SIZE RO TYPE  MOUNTPOINT
+sda         8:0    0   4G  0 disk  
+└─md0       9:0    0   4G  0 raid1 
+  └─md0p1 259:0    0   4G  0 md    /
+sdb         8:16   0   4G  0 disk  
+└─md0       9:0    0   4G  0 raid1 
+  └─md0p1 259:0    0   4G  0 md    /
 ```
