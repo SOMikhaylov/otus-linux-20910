@@ -209,6 +209,7 @@ mount -o bind /sys/ /mnt/sys
 chroot /mnt
 ```
 > все дальнейшие действия (до выключения ВМ) выполняются в системе размещенной на RAID
+
 измененен  `/etc/fstab` указан UUID раздела /dev/md0p1
 ```
 UUID=5cfe5809-29c4-40e6-8c0c-4c5a05a8bf09 /   xfs    defaults        0 0 
