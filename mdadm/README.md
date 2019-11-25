@@ -78,7 +78,7 @@ echo "DEVICE partitions" > /etc/mdadm.conf
 mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm.conf
 ```
 # **Script сборки RAID**
-[mdadm.sh](scripts/mdadm.sh)
+[01-mdadm.sh](scripts/01-mdadm.sh)
 
 ---
 # **Поломка RAID** 
@@ -133,7 +133,7 @@ for i in $(seq 1 5); do mount /dev/md0p$i /raid/part$i; done
 ---
 # **Задание со * : Vagrantfile, который сразу собирает систему с подключенным рейдом**
 
-скрипт [mdadm.sh](scripts/mdadm.sh) добавлен в provision [Vagrantfile](Vagrantfile)
+скрипт [01-mdadm.sh](scripts/01-mdadm.sh) добавлен в provision [Vagrantfile](Vagrantfile)
 
 ---
 # **Задание с ** : перенесети работающую систему с одним диском на RAID 1**
@@ -169,23 +169,25 @@ mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb1 /dev/sdc1 --metadat
 sfdisk --change-id /dev/sdb 1 fd
 sfdisk --change-id /dev/sdc 1 fd
 ```
-произведена перезагрузка, состояние после перезагрузки:
-```
-[root@otuslinux ~]# lsblk 
-NAME      MAJ:MIN RM SIZE RO TYPE  MOUNTPOINT
-sda         8:0    0  40G  0 disk  
-└─sda1      8:1    0  40G  0 part  /
-sdb         8:16   0   4G  0 disk  
-└─md0       9:0    0   4G  0 raid1 
-  └─md0p1 259:0    0   4G  0 md    
-sdc         8:32   0   4G  0 disk  
-└─md0       9:0    0   4G  0 raid1 
-  └─md0p1 259:0    0   4G  0 md 
-```
-создана файлоловая система и примонтирован раздел
+произведена перезагрузка, создана файловая система и примонтирован раздел
 ```
 mkfs.xfs /dev/md0p1
 mount /dev/md0p1 /mnt
+```
+состояние на текущий момент
+```
+[root@otuslinux ~]# lsblk -o +UUID
+NAME      MAJ:MIN RM SIZE RO TYPE  MOUNTPOINT UUID
+sda         8:0    0  40G  0 disk             
+└─sda1      8:1    0  40G  0 part  /          8ac075e3-1124-4bb6-bef7-a6811bf8b870
+sdb         8:16   0   4G  0 disk             a981ed4b-5e31-51ba-8ed4-a3a19f626544
+├─sdb1      8:17   0   4G  0 part             a981ed4b-5e31-51ba-8ed4-a3a19f626544
+└─md0       9:0    0   4G  0 raid1            
+  └─md0p1 259:0    0   4G  0 md    /mnt       5cfe5809-29c4-40e6-8c0c-4c5a05a8bf09
+sdc         8:32   0   4G  0 disk             a981ed4b-5e31-51ba-8ed4-a3a19f626544
+├─sdc1      8:33   0   4G  0 part             a981ed4b-5e31-51ba-8ed4-a3a19f626544
+└─md0       9:0    0   4G  0 raid1            
+  └─md0p1 259:0    0   4G  0 md    /mnt       5cfe5809-29c4-40e6-8c0c-4c5a05a8bf09 
 ```
 создан конфигурационный файл mdadm.conf
 ```
@@ -202,19 +204,22 @@ mount -o bind /dev/ /mnt/dev
 mount -o bind /proc/ /mnt/proc
 mount -o bind /sys/ /mnt/sys
 ```
-измененен  `/mnt/etc/fstab` указан UUID раздела с RAID
+сделан `chroot` в систему на RAID
 ```
-UUID=d9d7d70e-de14-4aa9-ad8b-9d31dc69a83b /   xfs    defaults        0 0 
+chroot /mnt
+```
+> все дальнейшие действия (до выключения ВМ) выполняются в системе размещенной на RAID
+измененен  `/etc/fstab` указан UUID раздела /dev/md0p1
+```
+UUID=5cfe5809-29c4-40e6-8c0c-4c5a05a8bf09 /   xfs    defaults        0 0 
 /swapfile none swap defaults 0 0
 ```
 создан новый initramfs
 ```
-chroot /mnt
 mv /boot/initramfs-$(uname -r).img /boot/initramfs-$(uname -r).img.bak
 dracut -f -v --mdadmconf --regenerate-all
-exit
 ```
-в `/mnt/etc/defautl/grub ` добавлен параметр
+в `/etc/default/grub ` добавлен параметр
 ```
 GRUB_CMDLINE_LINUX="... rd.auto=1 ..."
 ```
@@ -228,12 +233,12 @@ grub2-install /dev/sdc
 - отлючен диск с системой без RAID
 - загрузка с RAID 1 прошла успешно
 ```
-[root@otuslinux ~]# lsblk 
-NAME      MAJ:MIN RM SIZE RO TYPE  MOUNTPOINT
-sda         8:0    0   4G  0 disk  
-└─md0       9:0    0   4G  0 raid1 
-  └─md0p1 259:0    0   4G  0 md    /
-sdb         8:16   0   4G  0 disk  
-└─md0       9:0    0   4G  0 raid1 
-  └─md0p1 259:0    0   4G  0 md    /
+[root@otuslinux ~]# lsblk -o +UUID 
+NAME      MAJ:MIN RM SIZE RO TYPE  MOUNTPOINT UUID
+sda         8:0    0   4G  0 disk             a981ed4b-5e31-51ba-8ed4-a3a19f626544
+└─md0       9:0    0   4G  0 raid1            
+  └─md0p1 259:0    0   4G  0 md    /          5cfe5809-29c4-40e6-8c0c-4c5a05a8bf09
+sdb         8:16   0   4G  0 disk             a981ed4b-5e31-51ba-8ed4-a3a19f626544
+└─md0       9:0    0   4G  0 raid1            
+  └─md0p1 259:0    0   4G  0 md    /          5cfe5809-29c4-40e6-8c0c-4c5a05a8bf09
 ```
