@@ -76,3 +76,59 @@ Hello! You are in dracut module!
     \___)=(___/
 ```
 ---
+# **Задание со `*`: перенос /boot, на LVM раздел**
+установлен пропатченный grub2
+```
+cat > /etc/yum.repos.d/grub2.repo <<EOF
+[grub2-path]
+name=grub2-patch
+baseurl=https://yum.rumyantsev.com/centos/7/x86_64/
+EOF
+```
+```
+yum install grub2-2.02-0.76.el7.x86_64 -y
+```
+перемонтирован раздел с `/boot` в `/mnt`
+```
+umount /boot
+mount /dev/vda2 /mnt
+```
+скопированы данные загрузочного раздела в каталог /boot
+```
+rsync -avHPSAX /mnt/ /boot/
+umount /mnt
+```
+инициализируем PV раздел
+```
+pvcreate /dev/vda2 --bootloaderareasize 1m
+```
+увеличиваем `lvm` раздел
+```
+vgextend VolGroup00 /dev/vda2
+lvextend -l +100%FREE /dev/VolGroup00/LogVol00
+```
+пересоздан `initrd`
+```
+dracut -f -v
+```
+обновлен загрузчик
+```
+grub2-mkconfig -o /boot/grub2/grub.cfg
+grub2-install /dev/vda
+```
+из `/etc/fstab` убрана строка с разделом `/boot`
+```
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot  xfs     defaults        0 0
+```
+после перезагрузки
+```
+[root@lvm ~]# lsblk 
+NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+vda                     252:0    0   41G  0 disk 
+├─vda1                  252:1    0    1M  0 part 
+├─vda2                  252:2    0    1G  0 part 
+│ └─VolGroup00-LogVol00 253:0    0 38.4G  0 lvm  /
+└─vda3                  252:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00 253:0    0 38.4G  0 lvm  /
+  └─VolGroup00-LogVol01 253:1    0  1.5G  0 lvm  [SWAP]
+```
