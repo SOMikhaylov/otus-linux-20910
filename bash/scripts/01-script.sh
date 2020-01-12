@@ -1,7 +1,19 @@
 #!/bin/bash
 
-export STAT=/tmp/stat.txt
-export LOG=/tmp/access.log
+STAT=/tmp/stat.txt
+LOG=/tmp/access.log
+PID=/tmp/access.pid
+
+if [ -e $PID ]
+then
+    echo "Process can not start. It's run already."
+    exit 0
+else
+    echo $$ > $PID
+    echo "$PID has created"
+fi
+
+trap 'rm -f $PID; echo "$PID has removed"' INT TERM EXIT
 
 function parse_hour_access_log {
     echo "Web server statistic" > $STAT
