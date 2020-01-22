@@ -1,0 +1,52 @@
+---
+- name: Rule pamd for admin group
+  hosts: all
+  become: true
+  tasks:
+    - name: Add admin group (if group not exist)
+      group:
+        name: admin
+        state: present
+
+    - name: Add the user vagrant in admin group
+      user:
+        name: vagrant
+        groups: admin
+        append: yes
+
+    - name: Add the user root in admin group
+      user:
+        name: root
+        groups: admin
+        append: yes
+
+    - name: add user for test
+      user:
+        name: test
+        password: test
+        state: present
+
+    - name: add pam_time module in /etc/pam.d/sshd
+      pamd:
+        name: sshd
+        type: account
+        control: required
+        module_path: pam_nologin.so
+        new_type: account
+        new_control: required
+        new_module_path: pam_time.so
+        state: after
+
+    - name: get list users from group admin
+      shell: "getent group admin |cut -d: -f4 |sed 's/,/ /g'"
+      register: admin_group
+
+    - name: add time rule for admin group
+      lineinfile:
+        line: "*;*;!({{admin_group.stdout}});!SaSu0000-2400"
+        path: /etc/security/time.conf
+        state: present
+      
+      
+ 
+

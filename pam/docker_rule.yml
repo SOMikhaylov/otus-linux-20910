@@ -1,0 +1,39 @@
+---
+- name: Rule for docker
+  hosts: all
+  become: true
+  tasks:
+    - name: Install docker dependencies
+      yum:
+        name: yum-utils, device-mapper-persistent-data, lvm2
+        state: present
+    
+    - name: Add docker repository
+      shell: "yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo"
+
+    - name: Install docker
+      yum:
+        name: docker-ce
+        state: present
+      notify:
+        - restart docker
+
+    - name: Add the user vagrant in docker group
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+      notify:
+        - restart docker
+    
+    - name: Add polkit rule for work with docker service
+      copy:
+        src: conf/01-docker.rules
+        dest: /etc/polkit-1/rules.d/01-docker.rules
+
+  handlers:
+    - name: restart docker
+      systemd:
+        name: docker
+        state: restarted
+        enabled: yes
