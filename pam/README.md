@@ -28,7 +28,7 @@ s:5: unit=undefined                                                        │
 Jan 26 13:22:38 centos7 polkitd[1223]: /etc/polkit-1/rules.d/01-docker.rule│
 s:6: verb=undefined 
 ```
-> в случае использования systemd 226 - правило выглядела бы так: 
+> в случае использования systemd 226 - правило выглядело бы так: 
 ```
  polkit.addRule(function(action, subject) {
      var debug = true;
