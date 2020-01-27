@@ -1,0 +1,89 @@
+---
+- name: Borg general configuration 
+  hosts: all    
+  become: true
+  tasks:
+    - name: Install borg
+      get_url: 
+        url: https://github.com/borgbackup/borg/releases/download/1.1.10/borg-linux64
+        dest: /usr/bin/borg
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: add servers in /etc/hosts
+      blockinfile:
+        content: "192.168.11.100 server.local server\n192.168.11.101 client.local client\n"
+        dest: /etc/hosts
+
+- name: Borg configuration server
+  hosts: server    
+  become: true
+  tasks:
+    - name: Add user borg
+      user: 
+        name: borg
+        home: /home/borg
+        comment: BorgBackup
+        generate_ssh_key: yes
+
+    - name: Copy authorized_keys to server
+      copy:
+        src: ./keys/key.pub
+        dest: /home/borg/.ssh/authorized_keys
+        owner: borg
+        group: borg
+        mode: 0755
+        force: yes
+
+    - name: copy script for cron
+      copy:
+        src: ./borg.sh
+        dest: /root/borg.sh
+
+
+- name: Borg configuration client
+  hosts: client    
+  become: true
+  tasks:
+    - name: add .ssh directory
+      user:
+        name: root
+        generate_ssh_key: yes
+
+    - name: Copy public key to client
+      copy:
+        src: ./keys/key.pub
+        dest: /root/.ssh/id_rsa.pub
+        owner: root
+        group: root
+        mode: 0755
+        force: yes
+
+    - name: Copy private key to client
+      copy:
+        src: ./keys/key
+        dest: /root/.ssh/id_rsa
+        owner: root
+        group: root
+        mode: 0400
+        force: yes
+    
+    - name: edit ssh_config 
+      blockinfile:
+        content: "StrictHostKeyChecking no\nUserKnownHostsFile=/dev/null\n"
+        dest: /etc/ssh/ssh_config
+
+    - name: Add borg passphrase root
+      lineinfile:
+        path: /root/.bashrc
+        line: 'export BORG_PASSPHRASE="pass"'
+
+    - name: Initialize borg repo
+      script: borg_init.sh
+    
+    - name: Add cron task for borgbackup
+      cron:
+        name: "borg backup"
+        minute: "*/10"
+        job: "/root/borg.sh"
