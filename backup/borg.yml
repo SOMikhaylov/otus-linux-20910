@@ -66,7 +66,7 @@
         dest: /root/.ssh/id_rsa
         owner: root
         group: root
-        mode: 0400
+        mode: 0600
         force: yes
     
     - name: edit ssh_config 
@@ -81,7 +81,15 @@
 
     - name: Initialize borg repo
       script: borg_init.sh
-    
+
+    - name: Copy borg backup script
+      copy:
+        src: borg.sh
+        dest: /root/borg.sh
+        owner: root
+        group: root
+        mode: 0755
+
     - name: Add cron task for borgbackup
       cron:
         name: "borg backup"
