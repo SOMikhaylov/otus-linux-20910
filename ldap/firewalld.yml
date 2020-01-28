@@ -1,0 +1,71 @@
+---
+- name: configuration firewalld for freeipa (server,client)
+  hosts: all    
+  become: true
+  tasks:
+    - name: start firewalld service
+      systemd:
+        name: firewalld
+        state: started
+
+    - name: add servers in /etc/hosts
+      blockinfile:
+        content: "192.168.11.100 server.example.com server\n192.168.11.101 client.example.com client\n"
+        dest: /etc/hosts
+
+    - name: add ntp
+      firewalld:
+        service: ntp
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+    - name: add http
+      firewalld:
+        service: http
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+    - name: add https
+      firewalld:
+        service: https
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+        
+    - name: add ldap
+      firewalld:
+        service: ldap
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+    - name: add ldaps
+      firewalld:
+        service: ldaps
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+    - name: add kerberos
+      firewalld:
+        service: kerberos
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+    - name: add kpasswd
+      firewalld:
+        service: kpasswd
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+    - name: add dns
+      firewalld:
+        service: dns
+        permanent: yes
+        immediate: yes
+        state: enabled

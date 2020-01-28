@@ -1,0 +1,32 @@
+---
+- name: Install freeipa-server
+  hosts: server  
+  become: true
+  tasks:
+    - name: set FQDN hostname 
+      hostname:
+        name: server.example.com
+
+    - name: update nss package
+      yum:
+        name: nss
+        state: latest
+    
+    - name: Install ipa-server package
+      yum:
+        name: ipa-server
+        state: present
+
+    - name: Setup ipa-server
+      command:  >
+        ipa-server-install 
+            --admin-password=password 
+            --hostname=server.example.com 
+            --domain=example.com 
+            --realm=EXAMPLE.COM 
+            --ds-password=password 
+            --no-host-dns
+            --no-ntp
+            --unattended 
+
+

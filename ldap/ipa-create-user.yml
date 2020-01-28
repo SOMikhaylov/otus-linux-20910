@@ -1,0 +1,40 @@
+---
+- name: Creta ipa user with ssh authorize keys
+  hosts: client    
+  become: true
+  tasks:
+    - name: create ipa user
+      ipa_user:
+        name: user
+        state: present
+        givenname: User
+        sn: Acme
+        password: "password"
+        ipa_host: server.example.com
+        ipa_user: admin
+        ipa_pass: password
+        update_password: on_create
+        sshpubkey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyGlZZVskeQaie1MMe24napy/ruI5PYCwitBxTaEmFmOZgaS2Rlqufnff4XIVQ+pQudmHRaBlplgKzCzfkpwgn1aUy2lTWNACZSlcN4/VKPJKb+FEchIuf1sLSb8AN+PXQKwzyxDu/HtdLP9/nJ61h61Hk/QaXLMmpatQk0W7b3kc9zN74rDLLE5D2OnkGtVXI5yXHr3iDso2kZcHZ7ztIazx0d2jTVA4YYS8ht7UolSK+egmfeYwEClP9qitZp8/9k/yDTGJ59kQW20UWK2ynvqhNpYB0DnDhG60ivQFe0wvcRLVT4dqGwxxAFtimhM/kbyVfr8G8Wz7PojqAH5nl user@example.com
+
+    - name: add .ssh directory
+      user:
+        name: root
+        generate_ssh_key: yes
+
+    - name: Copy public key to root user
+      copy:
+        src: ./keys/id_rsa.pub
+        dest: /root/.ssh/id_rsa.pub
+        owner: root
+        group: root
+        mode: 0755
+        force: yes
+
+    - name: Copy private key to root user
+      copy:
+        src: ./keys/id_rsa
+        dest: /root/.ssh/id_rsa
+        owner: root
+        group: root
+        mode: 0600
+        force: yes
