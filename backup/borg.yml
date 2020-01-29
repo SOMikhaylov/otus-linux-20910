@@ -94,4 +94,4 @@
       cron:
         name: "borg backup"
         minute: "*/10"
-        job: "/root/borg.sh"
+        job: "source ~/.bashrc; bash /root/borg.sh"

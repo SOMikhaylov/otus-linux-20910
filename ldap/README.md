@@ -15,12 +15,13 @@ ansible-playbook ipa-server.yml
 ```
 ansible-playbook ipa-client.yml
 ```
-# **Создание учетной записи и Задание со `*`: Настройка авторизации по ssh ключам **
+# **Создание учетной записи и Задание со `*`: Настройка авторизации по ssh ключам**
 ```
-ansible-playbook ipa-create-user
+ansible-playbook ipa-create-user.yml
 ```
 проверка авторизации по ssh ключам
 ```
+vagrant ssh client
 Last login: Wed Jan 29 11:19:55 2020 from 192.168.11.1
 [vagrant@client ~]$ sudo -i
 [root@client ~]# ssh user@server
