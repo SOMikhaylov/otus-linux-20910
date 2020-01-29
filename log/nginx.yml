@@ -1,0 +1,23 @@
+---
+  - name: NGINX | Install and configure NGINX
+    hosts: web
+    become: true
+    tasks:
+      - name: NGINX | Install EPEL Repo package from standart repo
+        yum:
+          name: epel-release
+          state: present
+  
+      - name: NGINX | Install NGINX package from EPEL Repo
+        yum:
+          name: nginx
+          state: latest
+        notify:
+          - restart nginx
+  
+    handlers:
+      - name: restart nginx
+        systemd:
+          name: nginx
+          state: restarted
+          enabled: yes

@@ -1,0 +1,60 @@
+---
+- name: Configuration rsyslog server 
+  hosts: log    
+  become: true
+  tasks:
+    - name: edit /etc/rsyslog.conf add ModLoad imtcp
+      lineinfile: 
+        path: /etc/rsyslog.conf
+        regexp: '^#\$ModLoad imtcp'
+        line: "$ModLoad imtcp"
+        state: present
+
+    - name: edit /etc/rsyslog.conf add ModLoad imudp
+      lineinfile: 
+        path: /etc/rsyslog.conf
+        regexp: '^#\$ModLoad imudp'
+        line: "$ModLoad imudp"
+        state: present
+
+    - name: edit /etc/rsyslog.conf add InputTCPServerRun 514
+      lineinfile: 
+        path: /etc/rsyslog.conf
+        regexp: '^#\$InputTCPServerRun 514'
+        line: "$InputTCPServerRun 514"
+        state: present
+
+    - name: edit /etc/rsyslog.conf add UDPServerRun 514
+      lineinfile: 
+        path: /etc/rsyslog.conf
+        regexp: '^#\$UDPServerRun 514'
+        line: "$UDPServerRun 514"
+        state: present
+      notify: restart rsyslog
+
+  handlers:
+    - name: restart rsyslog
+      systemd:
+        name: rsyslog
+        state: restarted
+        enabled: yes        
+
+- name: Configuration rsyslog client
+  hosts: web
+  become: true
+  tasks:
+    - name: edit /etc/rsyslog.conf add remote server
+      lineinfile: 
+        path: /etc/rsyslog.conf
+        regexp: '^#*.*'
+        insertafter: '^#*.* @@remote-host:514'
+        line: "\n*.*  @@192.168.11.101:514\n"
+        state: present
+      notify: restart rsyslog
+        
+  handlers:
+    - name: restart rsyslog
+      systemd:
+        name: rsyslog
+        state: restarted
+        enabled: yes

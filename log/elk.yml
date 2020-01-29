@@ -1,0 +1,102 @@
+---
+- name: Configuration elk server 
+  hosts: elk    
+  become: true
+  tasks:
+
+    - name: install java package
+      yum: 
+        name: java-1.8.0-openjdk
+        state: present
+
+    - name: add elk repository
+      yum_repository:
+        name: elk
+        description: elk for 7.x packages
+        baseurl: https://artifacts.elastic.co/packages/7.x/yum
+        gpgcheck: yes
+        gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        enabled: yes
+
+    - name: install elasticsearch package
+      yum: 
+        name: elasticsearch
+        state: present
+
+    - name: start elasticsearch
+      systemd:
+        name: elasticsearch
+        state: started
+        enabled: yes
+
+    - name: edit /etc/elasticsearch/elasticsearch.yml
+      lineinfile: 
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^#network.host:'
+        line: "network.host: 127.0.0.1"
+        state: present
+      notify: restart elasticsearch
+    
+    - name: install kibana package
+      yum: 
+        name: kibana
+        state: present
+    
+    - name: start kibana
+      systemd:
+        name: kibana
+        state: started
+        enabled: yes
+
+    - name: edit /etc/kibana/kibana.yml
+      lineinfile: 
+        path: /etc/kibana/kibana.yml
+        regexp: '^#server.host:'
+        line: "server.host: 192.168.11.102"
+        state: present
+      notify: restart kibana
+    
+    - name: install logstash package
+      yum: 
+        name: logstash
+        state: present
+    
+    - name: start logstash
+      systemd:
+        name: logstash
+        state: started
+        enabled: yes
+    
+    - name: copy input.conf
+      copy: 
+        src: conf/input.conf
+        dest: /etc/logstash/conf.d/input.conf
+      notify: restart logstash
+
+    - name: copy output.conf
+      copy: 
+        src: conf/output.conf
+        dest: /etc/logstash/conf.d/output.conf
+      notify: restart logstash
+
+    - name: copy filter.conf
+      copy: 
+        src: conf/filter.conf
+        dest: /etc/logstash/conf.d/filter.conf
+      notify: restart logstash
+
+  handlers:
+    - name: restart elasticsearch
+      systemd:
+        name: elasticsearch
+        state: restarted
+
+    - name: restart kibana
+      systemd:
+        name: kibana
+        state: restarted
+    
+    - name: restart logstash
+      systemd:
+        name: logstash
+        state: restarted
