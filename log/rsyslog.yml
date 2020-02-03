@@ -10,7 +10,7 @@
         line: "$ModLoad imtcp"
         state: present
 
-    - name: edit /etc/rsyslog.conf add ModLoad imudp
+    - name: edit /etc/rsyslog.conf
       lineinfile: 
         path: /etc/rsyslog.conf
         regexp: '^#\$ModLoad imudp'
@@ -32,6 +32,16 @@
         state: present
       notify: restart rsyslog
 
+    - name: edit /etc/rsyslog.conf
+      blockinfile:
+        dest: /etc/rsyslog.conf
+        insertbefore: "#### GLOBAL DIRECTIVES ####"
+        block: |
+          $template remote-incoming-logs,"/var/log/%HOSTNAME%.log"
+          *.* ?remote-incoming-logs 
+          & stop 
+      notify: restart rsyslog
+
   handlers:
     - name: restart rsyslog
       systemd:
@@ -51,7 +61,7 @@
         line: "\n*.*  @@192.168.11.101:514\n"
         state: present
       notify: restart rsyslog
-        
+
   handlers:
     - name: restart rsyslog
       systemd:

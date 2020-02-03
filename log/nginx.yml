@@ -14,10 +14,38 @@
           state: latest
         notify:
           - restart nginx
-  
+
+      - name: copy nginx conf
+        copy:
+          src: conf/nginx.conf
+          dest: /etc/nginx/nginx.conf
+        notify:
+          - restart nginx
+
+      - name: enable audit /etc/nginx/nginx.conf
+        copy: 
+          content: -a exit,always -F path=/etc/nginx/nginx.conf -F perm=wa
+          dest: /etc/audit/rules.d/nginx.rules
+
+      - name: edit /etc/audisp/plugins.d/syslog.conf
+        lineinfile:
+          regexp: "^active = no"
+          line: "active = yes"
+          path: /etc/audisp/plugins.d/syslog.conf
+        notify: restart auditd
+      
+      - name: reboot web
+        reboot:
+      
     handlers:
       - name: restart nginx
         systemd:
           name: nginx
+          state: restarted
+          enabled: yes
+
+      - name: restart rsyslog
+        systemd:
+          name: rsyslog
           state: restarted
           enabled: yes
