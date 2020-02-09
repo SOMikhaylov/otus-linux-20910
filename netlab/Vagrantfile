@@ -16,6 +16,8 @@ MACHINES = {
         :net => [
                    {ip: '192.168.255.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "router-net"},
                    {ip: '192.168.10.1', adapter: 3, netmask: "255.255.255.240", virtualbox__intnet: "dir-net"},
+                   {ip: '192.168.10.33', adapter: 4, netmask: "255.255.255.240", virtualbox__intnet: "hw-net"},
+                   {ip: '192.168.10.65', adapter: 5, netmask: "255.255.255.192", virtualbox__intnet: "mgt-net"},
                 ]
   },
   
@@ -23,32 +25,44 @@ MACHINES = {
         :box_name => "centos/7",
         :net => [
                    {ip: '192.168.10.2', adapter: 2, netmask: "255.255.255.240", virtualbox__intnet: "dir-net"},
+                   {ip: '192.168.10.34', adapter: 3, netmask: "255.255.255.240", virtualbox__intnet: "hw-net"},
+                   {ip: '192.168.10.66', adapter: 4, netmask: "255.255.255.192", virtualbox__intnet: "mgt-net"},
                 ]
   },
     :office1Router => {
     :box_name => "centos/7",
     :net => [
                {ip: '192.168.10.3', adapter: 2, netmask: "255.255.255.240", virtualbox__intnet: "dir-net"},
-               {ip: '192.168.2.1', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "office1-net"},
+               {ip: '192.168.2.1', adapter: 3, netmask: "255.255.255.192", virtualbox__intnet: "dev-net"},
+               {ip: '192.168.2.65', adapter: 4, netmask: "255.255.255.192", virtualbox__intnet: "test-net"},
+               {ip: '192.168.2.129', adapter: 5, netmask: "255.255.255.192", virtualbox__intnet: "mgt-net"},
+               {ip: '192.168.2.193', adapter: 6, netmask: "255.255.255.192", virtualbox__intnet: "hw-net"},
             ]
   },
   :office1Server => {
     :box_name => "centos/7",
     :net => [
-               {ip: '192.168.2.2', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "office1-net"},
+               {ip: '192.168.2.3', adapter: 2, netmask: "255.255.255.192", virtualbox__intnet: "dev-net"},               {ip: '192.168.2.1', adapter: 3, netmask: "255.255.255.192", virtualbox__intnet: "dev-net"},
+               {ip: '192.168.2.66', adapter: 3, netmask: "255.255.255.192", virtualbox__intnet: "test-net"},
+               {ip: '192.168.2.130', adapter: 4, netmask: "255.255.255.192", virtualbox__intnet: "mgt-net"},
+               {ip: '192.168.2.194', adapter: 5, netmask: "255.255.255.192", virtualbox__intnet: "hw-net"},
             ]
   },
   :office2Router => {
     :box_name => "centos/7",
     :net => [
                {ip: '192.168.10.4', adapter: 2, netmask: "255.255.255.240", virtualbox__intnet: "dir-net"},
-               {ip: '192.168.1.1', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "office2-net"},
+               {ip: '192.168.1.1', adapter: 3, netmask: "255.255.255.128", virtualbox__intnet: "dev-net"},
+               {ip: '192.168.1.129', adapter: 4, netmask: "255.255.255.192", virtualbox__intnet: "test-net"},
+               {ip: '192.168.1.193', adapter: 5, netmask: "255.255.255.192", virtualbox__intnet: "hw-net"},
             ]
   },
   :office2Server => {
     :box_name => "centos/7",
     :net => [
-               {ip: '192.168.1.2', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "office2-net"},
+               {ip: '192.168.1.2', adapter: 2, netmask: "255.255.255.128", virtualbox__intnet: "dev-net"},
+               {ip: '192.168.1.130', adapter: 3, netmask: "255.255.255.192", virtualbox__intnet: "test-net"},
+               {ip: '192.168.1.194', adapter: 4, netmask: "255.255.255.192", virtualbox__intnet: "hw-net"},
             ]
   },
 }
@@ -79,23 +93,28 @@ Vagrant.configure("2") do |config|
         when "inetRouter"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             sysctl net.ipv4.conf.all.forwarding=1
-            iptables -t nat -A POSTROUTING ! -d 192.168.10.0/16 -o eth0 -j MASQUERADE
+            iptables -t nat -A POSTROUTING ! -d 192.168.0.0/16 -o eth0 -j MASQUERADE
+            ip route add 192.168.10.0/24 via 192.168.255.2
+            ip route add 192.168.2.0/24 via 192.168.255.2
+            ip route add 192.168.1.0/24 via 192.168.255.2
             SHELL
         when "centralRouter"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             sysctl net.ipv4.conf.all.forwarding=1
-            iptables -t nat -A POSTROUTING ! -d 192.168.10.0/16 -o eth1 -j MASQUERADE
+            iptables -t nat -A POSTROUTING ! -d 192.168.10.0/24 -o eth1 -j MASQUERADE
             echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
             echo "GATEWAY=192.168.255.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
             systemctl restart network
             ip route del default
             ip route add default via 192.168.255.1
+            ip route add 192.168.10.32/28 via 192.168.10.1
+            ip route add 192.168.10.64/26 via 192.168.10.1
             SHELL
         when "centralServer"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
             echo "GATEWAY=192.168.10.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-            systemctl restart
+            systemctl restart network
             ip route del default
             ip route add default via 192.168.10.1
             SHELL
@@ -115,7 +134,7 @@ Vagrant.configure("2") do |config|
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
             echo "GATEWAY=192.168.2.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-            systemctl restart
+            systemctl restart network
             ip route del default
             ip route add default via 192.168.2.1
             SHELL
@@ -135,7 +154,7 @@ Vagrant.configure("2") do |config|
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
             echo "GATEWAY=192.168.1.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-            systemctl restart
+            systemctl restart network
             ip route del default
             ip route add default via 192.168.1.1
             SHELL
