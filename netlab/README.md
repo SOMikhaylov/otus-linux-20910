@@ -87,3 +87,42 @@
 > Свободных подсетей нет.
 
 ---
+
+# **Проверка**
+```
+[root@office1Server ~]# traceroute 192.168.1.2
+traceroute to 192.168.1.2 (192.168.1.2), 30 hops max, 60 byte packets
+ 1  gateway (192.168.2.1)  0.911 ms  0.834 ms  0.783 ms
+ 2  192.168.10.1 (192.168.10.1)  2.480 ms  2.442 ms  2.397 ms
+ 3  192.168.10.4 (192.168.10.4)  2.354 ms  2.304 ms  2.261 ms
+ 4  192.168.1.2 (192.168.1.2)  2.219 ms  2.178 ms  2.491 ms
+
+[root@office1Server ~]# traceroute 192.168.1.130
+traceroute to 192.168.1.130 (192.168.1.130), 30 hops max, 60 byte packets
+ 1  gateway (192.168.2.1)  0.225 ms  0.141 ms  0.086 ms
+ 2  192.168.10.1 (192.168.10.1)  0.322 ms  0.449 ms  1.092 ms
+ 3  192.168.10.4 (192.168.10.4)  1.048 ms  1.002 ms  0.897 ms
+ 4  192.168.1.130 (192.168.1.130)  1.132 ms  1.083 ms *
+
+[root@office1Server ~]# traceroute 192.168.1.194
+traceroute to 192.168.1.194 (192.168.1.194), 30 hops max, 60 byte packets
+ 1  gateway (192.168.2.1)  0.232 ms  0.128 ms  0.083 ms
+ 2  192.168.10.1 (192.168.10.1)  0.303 ms  0.280 ms  1.661 ms
+ 3  192.168.10.4 (192.168.10.4)  2.289 ms  2.258 ms  2.223 ms
+ 4  192.168.1.194 (192.168.1.194)  2.165 ms  2.085 ms  2.047 ms
+
+[root@office1Server ~]# traceroute ya.ru
+traceroute to ya.ru (87.250.250.242), 30 hops max, 60 byte packets
+ 1  gateway (192.168.2.1)  2.505 ms  2.437 ms  2.396 ms
+ 2  192.168.10.1 (192.168.10.1)  2.322 ms  2.279 ms  2.241 ms
+ 3  192.168.255.1 (192.168.255.1)  2.569 ms  2.533 ms  2.494 ms
+ 4  * * *
+ 5  * * *
+ 6  * * *
+ 7  * * *
+ 8  ns-kem252br-te1-5-2900.ll-kem.zsttk.ru (81.1.200.233)  11.965 ms  5.185 ms  5.069 ms
+ 9  kmo01.transtelecom.net (217.150.44.118)  9.268 ms  9.217 ms  8.716 ms
+10  mskn17ra-lo1.transtelecom.net (217.150.55.21)  53.037 ms  49.237 ms  47.304 ms
+11  Yandex-gw.transtelecom.net (188.43.3.213)  45.240 ms  45.965 ms  50.694 ms
+12  ya.ru (87.250.250.242)  50.632 ms  49.782 ms vla-32z2-eth-trunk1-1.yndx.net (93.158.172.51)  53.937 ms
+```
