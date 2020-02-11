@@ -1,0 +1,6 @@
+vlans:
+  - name: eth1.1
+    physdev: eth1
+    vlan_id: 1
+    ipaddr: 10.10.10.1
+    netmask: 255.255.255.0

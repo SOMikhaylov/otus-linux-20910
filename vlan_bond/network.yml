@@ -1,0 +1,101 @@
+---
+- name: disable vagrant nat interface
+  hosts: localRouters, testServers
+  become: true
+  tasks:
+    - name: configurution eth0
+      lineinfile:
+        path: /etc/sysconfig/network-scripts/ifcfg-eth0
+        line: "DEFROUTE=no"
+      notify: restart eth0
+
+  handlers:
+    - name: restart eth0
+      shell: "ifdown eth0 && ifup eth0"
+
+- name: configure team interfaces
+  hosts: team
+  become: true
+  tasks:
+    - name: configuration team master
+      template:
+        src: templates/team-master.j2
+        dest: "/etc/sysconfig/network-scripts/ifcfg-{{ item.name }}"
+      with_items:
+        - '{{ interfaces.team }}'
+      notify: start team master interface
+
+    - name: configuration team slave
+      template:
+        src: templates/team-slave.j2
+        dest: "/etc/sysconfig/network-scripts/ifcfg-{{ item.name }}"
+      with_items:
+        - '{{ interfaces.team_slave }}'
+      notify: start team slave interface
+
+  handlers:
+    - name: start team master interface
+      shell: ifup {{ item.name }}
+      with_items:
+        - '{{ interfaces.team }}'
+
+    - name: start team slave interface
+      shell: ifup {{ item.name }}
+      with_items:
+        - '{{ interfaces.team_slave }}'
+
+- name: configure Routers
+  hosts: routers
+  become: true
+  tasks:
+  - name: enable ipv4 forwarding 
+    sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+
+  - name: configure routing with MASQUERADE
+    iptables:
+      table: nat
+      chain: POSTROUTING
+      destination: "{{ item.dst }}"
+      out_interface: "{{ item.dev }}"
+      jump: MASQUERADE
+    when: rules is defined
+    with_items:
+      - '{{ rules }}'
+
+  - name: configure static routes
+    template:
+      src: templates/route.j2
+      dest: /etc/sysconfig/network
+    when: routes is defined
+    with_items:
+      - '{{ routes }}'
+    notify: network restart
+
+  handlers:
+    - name: network restart
+      systemd:
+        name: network
+        state: restarted
+        force: yes
+
+- name: configure vlans
+  hosts: vlan
+  become: true
+  tasks:
+    - name: Configure vlan on interfaces
+      template:
+        src: templates/vlan.j2
+        dest: "/etc/sysconfig/network-scripts/ifcfg-{{ item.name }}"
+      when: vlans is defined
+      with_items:
+        - '{{ vlans }}'
+      notify: reload vlans
+
+  handlers:
+    - name: reload vlans
+      shell: "ifdown {{ item.name }}; ifup {{ item.name }}"
+      with_items:
+        - '{{ vlans }}'

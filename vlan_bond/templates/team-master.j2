@@ -1,0 +1,12 @@
+NM_CONTROLLED=no
+BOOTPROTO=none
+IPADDR={{ item.ipaddr }}
+NETMASK={{ item.netmask }}
+DEVICE={{ item.name }}
+{% if item.gateway is defined %}
+GATEWAY= {{ item.gateway }}
+{% endif %}
+IPV6INIT=no
+ONBOOT=yes
+DEVICETYPE=Team
+TEAM_CONFIG="{\"runner\": {\"name\": \"roundrobin\"}}"

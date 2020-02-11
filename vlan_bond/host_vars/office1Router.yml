@@ -1,0 +1,13 @@
+routes:
+  - subnet: default
+    gw: 192.168.10.1
+
+vlans:
+    - name: eth2.100
+      physdev: eth2
+      vlan_id: 100
+      ipaddr: no
+    - name: eth2.101
+      physdev: eth2
+      vlan_id: 100
+      ipaddr: no

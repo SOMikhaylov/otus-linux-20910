@@ -1,0 +1,19 @@
+interfaces:
+  team:
+    - name: team0
+      ipaddr: 192.168.255.2
+      netmask: 255.255.255.252
+      gateway: 192.168.255.1
+  team_slave:
+    - name: eth1
+      master: team0
+    - name: eth2
+      master: team0
+
+routes:
+  - subnet: default
+    gw: 192.168.255.1
+
+rules:
+  - dst: "! 192.168.10.0/24"
+    dev: eth1

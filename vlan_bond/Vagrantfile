@@ -1,0 +1,90 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+:inetRouter => {
+        :box_name => "centos/7",
+        :fwd => {:guest => 22, :host => 62001},
+        :net => [
+                   {adapter: 2, virtualbox__intnet: "router-net"},
+                   {adapter: 3, virtualbox__intnet: "router-net"},
+                ]
+  },
+  :centralRouter => {
+        :box_name => "centos/7",
+        :fwd => {:guest => 22, :host => 62002},
+        :net => [
+                   {adapter: 2, virtualbox__intnet: "router-net"},
+                   {adapter: 3, virtualbox__intnet: "router-net"},
+                   {ip: '192.168.10.1', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+                ]
+  },
+    :office1Router => {
+    :box_name => "centos/7",
+    :fwd => {:guest => 22, :host => 62003},
+    :net => [
+               {ip: '192.168.10.2', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "dir-net"},
+               {adapter: 3, virtualbox__intnet: "test-net"},
+            ]
+  },
+  :testServer1 => {
+    :fwd => {:guest => 22, :host => 62004},
+    :box_name => "centos/7",
+    :net => [
+              {adapter: 2, virtualbox__intnet: "test-net"},
+            ]
+  },
+  :testServer2 => {
+    :fwd => {:guest => 22, :host => 62005},
+    :box_name => "centos/7",
+    :net => [
+              {adapter: 2, virtualbox__intnet: "test-net"},
+            ]
+  },
+  :testClient1 => {
+    :fwd => {:guest => 22, :host => 62006},
+    :box_name => "centos/7",
+    :net => [
+              {adapter: 2, virtualbox__intnet: "test-net"},
+            ]
+  },
+  :testClient2 => {
+    :fwd => {:guest => 22, :host => 62007},
+    :box_name => "centos/7",
+    :net => [
+              {adapter: 2, virtualbox__intnet: "test-net"},
+            ]
+  },
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+
+        box.vm.box = boxconfig[:box_name]
+        box.vm.host_name = boxname.to_s
+
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+        end
+        
+        if boxconfig.key?(:public)
+          box.vm.network "public_network", boxconfig[:public]
+        end
+
+        if boxconfig.key?(:fwd)
+          box.vm.network "forwarded_port", boxconfig[:fwd]
+        end
+
+        box.vm.provision "shell", inline: <<-SHELL
+          mkdir -p ~root/.ssh
+                cp ~vagrant/.ssh/auth* ~root/.ssh
+        SHELL
+  end
+end
+end
+
