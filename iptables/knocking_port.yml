@@ -1,0 +1,46 @@
+---
+- name: iptables knocking port
+  hosts: inetRouter
+  become: true
+  tasks:
+    - name: install iptables packages
+      yum:
+        name: iptables, iptables-services
+        state: present
+
+    - name: enable and start iptables service
+      systemd:
+        name: iptables
+        state: started
+        enabled: yes
+
+    - name: add rule for knocking port
+      copy:
+        src: conf/iptables.knock
+        dest: /etc/sysconfig/iptables
+      notify: restart iptables
+  
+  handlers:
+    - name: restart iptables
+      systemd:
+        state: restarted
+        name: iptables
+
+- name: knock script
+  hosts: centralRouter
+  become: true
+  tasks:
+    - name: install nmap
+      yum:
+        name: nmap
+        state: present
+        
+    - name: copy knock script
+      copy:
+        src: conf/knock.sh
+        dest: /home/vagrant/knock.sh
+        owner: vagrant
+        group: vagrant
+        mode: 0775
+
+
