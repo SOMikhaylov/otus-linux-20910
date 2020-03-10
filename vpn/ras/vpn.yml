@@ -1,0 +1,46 @@
+---
+- name: install ras vpn 
+  hosts: all
+  become: true
+  tasks:
+
+    - name: install epel repo
+      yum:
+        name: epel-release
+        state: present
+
+    - name: install openvpn iperf3
+      yum: 
+        name: openvpn, iperf3
+        state: present
+    
+    - name: disable SELinux
+      selinux:
+        state: disabled
+        
+    - name: selinux disable now
+      shell: setenforce 0
+
+    - name: copy RAS PKI
+      copy:
+        src: pki
+        dest: /etc/openvpn
+
+    - name: Copy ta.key
+      copy:
+        src: ta.key
+        dest: /etc/openvpn/
+
+    - name: configure ras server
+      copy:
+        src: ./server.conf
+        dest: /etc/openvpn/server.conf
+      notify: start openvpn@server.service
+            
+  handlers:
+    - name: start openvpn@server.service
+      systemd:
+        name: openvpn@server.service
+        state: started
+        enabled: yes
+

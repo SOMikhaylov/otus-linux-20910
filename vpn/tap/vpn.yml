@@ -1,0 +1,66 @@
+---
+- name: install tap vpn 
+  hosts: all
+  become: true
+  tasks:
+
+    - name: install epel repo
+      yum:
+        name: epel-release
+        state: present
+
+    - name: install openvpn iperf3
+      yum: 
+        name: openvpn, iperf3
+        state: present
+    
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+      notify: selinux disable now
+    
+    - name: copy static.key
+      copy:
+        src: conf/static.key
+        dest: /etc/openvpn/static.key
+
+  handlers:
+    - name: selinux disable now
+      shell: setenforce 0
+
+- name: configure server
+  hosts: server
+  become: true
+  tasks:
+
+    - name: copy server.conf
+      copy:
+        src: conf/server.conf
+        dest: /etc/openvpn/server.conf
+      notify: start openvpn@server.service
+
+  handlers:
+    - name: start openvpn@server.service
+      systemd:
+        name: openvpn@server.service
+        state: started
+        enabled: yes
+
+- name: configure client
+  hosts: client
+  become: true
+  tasks:
+
+    - name: copy client.conf
+      copy:
+        src: conf/client.conf
+        dest: /etc/openvpn/client.conf
+      notify: start openvpn@client.service
+
+  handlers:
+    - name: start openvpn@client.service
+      systemd:
+        name: openvpn@client.service
+        state: started
+        enabled: yes
+
