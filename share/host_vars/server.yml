@@ -1,0 +1,14 @@
+folders: 
+  - '/srv/smbshare'
+  - '/srv/smbshare/upload'
+
+sharefolders:
+  - path: '/srv/smbshare' 
+      
+packages:
+  - name: 'samba, samba-client, samba-common, policycoreutils-python'
+
+users:
+  - name: smbuser
+    description: 'Samba user'
+    smbpasswd: 123

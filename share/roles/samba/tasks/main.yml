@@ -1,0 +1,99 @@
+---
+# tasks file for roles/samba
+
+- name: copy /etc/hosts
+  copy:
+    src: hosts
+    dest: /etc/hosts
+
+- name: install samba packages
+  yum:
+    name: '{{ item.name }}'
+    state: present
+  when: packages is defined
+  with_items:
+    - '{{ packages }}'
+
+- name: create samba group
+  group:
+    name: samba
+    state: present
+
+- name: create user for samba
+  user:
+    name: '{{ item.name }}'
+    comment: '{{ item.description }}'
+    group: samba
+    shell: /sbin/nologin
+  when: users is defined
+  with_items: 
+    - '{{ users }}'
+
+- name: smbpasswd
+  shell: "(echo {{ item.smbpasswd }}; echo {{ item.smbpasswd }}) | smbpasswd -s -a {{ item.name }}"
+  when: users is defined
+  with_items: 
+    - '{{ users }}'
+
+- name: create samba folder
+  file:
+    path: '{{ item }}'
+    state: directory
+    group: samba
+    mode: '0770'
+  when: folders is defined
+  with_items: 
+    - '{{ folders }}'
+
+- name: copy samba conf
+  template:
+    src: smb.j2
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: '0775'
+  when: sharefolders is defined
+  with_items: 
+    - '{{ sharefolders }}'
+  notify: restart samba service
+  
+- name: set selinux context for samba
+  sefcontext:
+    target: '{{ item }}(/.*)?'
+    setype: samba_share_t
+    state: present
+  when: folders is defined
+  with_items: 
+    - '{{ folders }}'
+
+- name: run restorecon samba
+  shell: "restorecon -v {{ item }}"
+  when: folders is defined
+  with_items: 
+    - '{{ folders }}'
+
+- name: configure firewalld 
+  firewalld:
+    service: samba
+    permanent: yes
+    state: enabled
+  notify: restart firewalld
+
+- name: add autofs conf while
+  lineinfile:
+   path: /etc/auto.master
+   regexp: '^/misc'
+   line: '/mnt /etc/auto.{{ item }}'
+  when: autofs is defined
+  with_items:
+    - '{{ autofs }}'
+
+- name: edit /etc/fstab
+  lineinfile:
+    path: /etc/fstab
+    line: '{{ item }}'
+  when: mount is defined
+  with_items: 
+    - '{{ mount }}'
+  notify: mount
+
