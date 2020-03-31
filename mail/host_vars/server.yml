@@ -1,0 +1,7 @@
+mail:
+  - name: test
+    pass: $1$NU2dwOnH$bT/rK/PnJediBi1e8NZwA1
+
+network:
+  - subnet: 192.168.10.0/24
+    ip: 192.168.10.10 

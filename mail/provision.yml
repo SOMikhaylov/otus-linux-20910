@@ -1,0 +1,8 @@
+---
+- name: install and configure samba server and client
+  hosts: all
+  become: true
+  
+  roles:
+    - mail
+

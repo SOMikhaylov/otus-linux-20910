@@ -1,0 +1,15 @@
+---
+# handlers file for roles/mail
+
+- name: restart postfix
+  systemd:
+    name: postfix
+    state: restarted
+    enabled: yes
+
+- name: restart dovecot
+  systemd:
+    name: dovecot
+    state: restarted
+    enabled: yes
+    

@@ -1,0 +1,18 @@
+From sergey@example.com Wed Apr  1 22:07:48 2020
+Return-Path: <sergey@example.com>
+X-Original-To: vagrant@[192.168.10.10]
+Delivered-To: vagrant@[192.168.10.10]
+Received: from sergey?example.com (unknown [192.168.10.1])
+	by server.localdomain (Postfix) with SMTP id ADA2E5A8A5
+	for <vagrant@[192.168.10.10]>; Wed,  1 Apr 2020 15:05:45 +0000 (UTC)
+From: Sergey Mikhaylov <sergey@example.com>
+To: Vagrant user <vagrant@[192.168.10.10]>
+Subject: Test subject
+Content-Type: text/plain 
+Status: RO
+Content-Length: 21
+Lines: 2
+
+Hello! How are you?
+
+

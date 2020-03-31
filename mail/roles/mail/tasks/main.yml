@@ -1,0 +1,23 @@
+---
+# tasks file for roles/mail
+
+- name: install mail packages
+  yum:
+    name: postfix, dovecot
+    state: present
+
+- name: copy postfix config
+  template: 
+    src: main.j2
+    dest: /etc/postfix/main.cf
+  when: network is defined
+  with_items:
+    - '{{ network }}'
+  notify: restart postfix
+
+- name: copy dovecot config
+  copy:
+    src: 10-mail.conf
+    dest: /etc/dovecot/conf.d/10-mail.conf
+  notify: restart dovecot
+
