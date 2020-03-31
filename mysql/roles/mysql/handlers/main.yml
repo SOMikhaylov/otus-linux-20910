@@ -1,0 +1,34 @@
+---
+# handlers file for roles/mysql
+- name: get initial mysql passwd
+  shell: "cat /var/log/mysqld.log | grep 'root@localhost:' | awk '{print $11}'"
+  register: init_pass
+  listen: change root password
+  
+- name: copy init password to ~/.my.cnf
+  template:
+    src: my.cnf.j2
+    dest: /root/.my.cnf
+  when: pass is defined
+  with_items:
+    - '{{ init_pass.stdout }}'
+  listen: change root password
+
+- name: change root password
+  shell: | 
+    mysql --connect-expired-password << EOF
+    ALTER USER USER() IDENTIFIED BY '{{ item }}';
+    EOF
+  when: pass is defined
+  with_items:
+    - '{{ pass }}'
+  listen: change root password
+
+- name: copy password to ~/.my.cnf
+  template:
+    src: my.cnf.j2
+    dest: /root/.my.cnf
+  when: pass is defined
+  with_items:
+    - '{{ pass }}'
+  listen: change root password

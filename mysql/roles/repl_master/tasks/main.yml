@@ -1,0 +1,34 @@
+---
+# tasks file for roles/repl_master
+
+- name: create database bet
+  mysql_db: 
+    name: bet
+    state: present
+    login_unix_socket: /var/lib/mysql/mysql.sock
+
+- name: copy bet dump
+  copy: 
+    src: bet.dmp
+    dest: /tmp/bet.dmp
+
+- name: import bet dump
+  mysql_db: 
+    name: bet
+    state: import
+    target: /tmp/bet.dmp
+    login_unix_socket: /var/lib/mysql/mysql.sock
+
+- name: create user for replicaion
+  mysql_user:
+    name: repl
+    host: '%'
+    password: '{{ item }}'
+    priv: '*.*:REPLICATION SLAVE'
+    login_unix_socket: /var/lib/mysql/mysql.sock
+  when: pass is defined
+  with_items: 
+    - '{{ pass }}'
+
+
+    

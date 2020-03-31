@@ -1,0 +1,13 @@
+packages:
+  - name: 'samba, samba-client, samba-common, cifs-utils, autofs'
+
+mount:
+  - "//server/smbshare  /mnt  cifs   username=smbuser,password=123,defaults  0  0"
+
+users:
+  - name: smbuser
+    description: 'Samba user'
+    smbpasswd: 123
+
+autofs:
+  - samba

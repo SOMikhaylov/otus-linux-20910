@@ -1,0 +1,17 @@
+---
+# handlers file for roles/samba
+
+- name: restart samba service
+  systemd:
+    name: smb
+    state: restarted
+    enabled: yes
+
+- name: restart firewalld
+  systemd:
+    name: firewalld
+    state: restarted
+    enabled: yes
+
+- name: mount
+  shell: 'mount -a'
