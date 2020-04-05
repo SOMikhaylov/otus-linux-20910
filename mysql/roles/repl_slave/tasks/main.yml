@@ -1,0 +1,26 @@
+---
+# tasks file for roles/repl_slave
+
+- name: copy dump master
+  copy:
+    src: master.sql
+    dest: /tmp/
+
+- name: restore database from dump
+  mysql_db:
+    state: import
+    name: all
+    target: /tmp/master.sql
+    login_unix_socket: /var/lib/mysql/mysql.sock
+
+- name: enable replication
+  shell: |
+    mysql << EOF
+    DROP DATABASE bet;
+    DROP USER repl;
+    CHANGE MASTER TO MASTER_HOST = "192.168.11.150", MASTER_PORT = 3306, MASTER_USER = "repl", MASTER_PASSWORD = "{{ item }}", MASTER_AUTO_POSITION = 1;
+    START SLAVE;
+    EOF
+  when: pass is defined
+  with_items:
+    - '{{ pass }}'

@@ -1,0 +1,3 @@
+config: my.cnf.d.master
+
+pass: Password1!

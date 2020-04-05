@@ -1,0 +1,21 @@
+---
+- name: install and configure mysql 
+  hosts: all
+  become: true
+  
+  roles:
+    - mysql
+
+- name: configure mysql replication on master
+  hosts: master
+  become: true
+  
+  roles:
+    - repl_master
+
+- name: configure mysql replication on slave
+  hosts: slave
+  become: true
+  
+  roles:
+    - repl_slave
