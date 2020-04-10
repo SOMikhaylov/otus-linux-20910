@@ -1,0 +1,67 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+    :router1 => {
+        :box_name => "centos/7",
+        :fwd => {:guest => 22, :host => 62001},
+        :net => [
+                   {ip: "192.168.12.10", adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net12"},
+                   {ip: "192.168.16.10", adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "net16"},
+                   {ip: '10.10.10.10', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "netA"},
+                ]
+    },
+    :router2 => {
+        :box_name => "centos/7",
+        :fwd => {:guest => 22, :host => 62002},
+        :net => [
+                   {ip: "192.168.12.9", adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net12"},
+                   {ip: "192.168.20.10", adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "net20"},
+                   {ip: '10.10.20.10', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "netB"},
+                ]
+    },
+    :router3 => {
+        :fwd => {:guest => 22, :host => 62003},
+        :box_name => "centos/7",
+        :net => [
+                   {ip: "192.168.16.9", adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net16"},
+                   {ip: "192.168.20.9", adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "net20"},
+                   {ip: '10.10.30.10', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "netC"},
+                ]
+    },
+}
+
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+      config.vm.define boxname do |box|
+
+          box.vm.box = boxconfig[:box_name]
+          box.vm.host_name = boxname.to_s
+
+
+          if boxconfig.key?(:fwd)
+            box.vm.network "forwarded_port", boxconfig[:fwd]
+          end
+
+          boxconfig[:net].each do |ipconf|
+            box.vm.network "private_network", ipconf
+          end
+        
+          if boxconfig.key?(:public)
+            box.vm.network "public_network", boxconfig[:public]
+          end
+          
+
+          box.vm.provision "ansible" do |ansible|
+            ansible.verbose = "vvv"
+            ansible.playbook = "provision.yml"
+          end
+
+      end
+  end
+end

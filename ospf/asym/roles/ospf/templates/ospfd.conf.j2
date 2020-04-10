@@ -1,0 +1,26 @@
+!
+hostname {{ ansible_hostname }}
+password zebra
+enable password zebra
+!
+log stdout
+log file /var/log/quagga/ospfd.log/
+
+{% for item in network %}
+interface {{ item.interface }}
+    ip ospf mtu-ignore
+    ip ospf network point-to-point
+    ip ospf cost {{ item.cost }}
+    ip ospf hello-interval 5
+    ip ospf dead-interval 10
+!
+{% endfor %}
+
+router ospf
+{% for item in network %}
+    network {{ item.subnet }} area 0
+    neighbor {{ item.neighbor }}
+{% endfor %}
+!
+default-information originate always
+!

@@ -1,0 +1,17 @@
+network:
+  - interface: eth1
+    description: net16
+    ip: 192.168.16.9/24
+    subnet: 192.168.16.0/24
+    neighbor: "192.168.16.10"
+    cost: 10
+
+
+  - interface: eth2
+    description: net20
+    ip: 192.168.20.9/24
+    subnet: 192.168.20.0/24
+    neighbor: "192.168.20.10"
+    cost: 10
+
+    

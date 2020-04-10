@@ -1,0 +1,52 @@
+---
+# tasks file for roles/ospf
+
+- name: disable vagrant nat
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    line: "DEFROUTE=no"
+  notify: reload eth0
+
+- name: enable ipv4 forwarding
+  sysctl:
+    name: net.ipv4.conf.all.forwarding
+    value: '1'
+    state: present
+
+- name: disable rp filter
+  sysctl:
+    name: net.ipv4.conf.all.rp_filter
+    value: '0'
+    state: present
+
+- name: disable selinux
+  selinux:
+    state: disabled
+  
+- name: install packages
+  yum: 
+    name: quagga, traceroute
+    state: present
+
+- name: copy daemons
+  copy:
+    src: daemons
+    dest: /etc/quagga/daemons
+    owner: quagga
+    group: quaggavt
+
+- name: copy zebra config
+  template: 
+    src: zebra.conf.j2
+    dest: /etc/quagga/zebra.conf
+    owner: quagga
+    group: quaggavt
+  notify: restart zebra service
+
+- name: copy ospfd config
+  template: 
+    src: ospfd.conf.j2
+    dest: /etc/quagga/ospfd.conf
+    owner: quagga
+    group: quaggavt
+  notify: restart ospfd service

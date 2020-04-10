@@ -1,0 +1,20 @@
+!
+hostname {{ ansible_hostname }}
+password zebra
+enable password zebra
+!
+interface lo
+    description loopback
+    ip address 127.0.0.1/8
+!
+{% for item in network %}
+interface {{ item.interface }}
+    description {{ item.description }}
+    ip address {{ item.ip }} 
+    ip forwarding
+!
+{% endfor %}
+!
+ip forwarding
+!
+log file /var/log/quagga/zebra.log
