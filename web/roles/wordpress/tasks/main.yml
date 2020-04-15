@@ -1,0 +1,51 @@
+---
+# tasks file for roles/wordpress
+
+- name: install the php-fpm repo
+  yum_repository:
+    name: remi-php73
+    description: Remi's PHP 7.3 RPM repository for Enterprise Linux 7 - $basearch
+    mirrorlist: http://cdn.remirepo.net/enterprise/7/php73/mirror
+    enabled: yes
+    gpgcheck: yes
+    gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi 
+
+- name: install packages
+  yum:
+    name: 
+      - php-fpm 
+      - php-mysql
+    state: present
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: download and extract wordpress
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: /var/www/html/
+    remote_src: yes
+
+- name: copy php-fpm.conf
+  copy:
+    src: php-fpm.conf
+    dest: /etc/php-fpm.d/www.conf
+  notify: restart php-fpm
+
+- name: create db wordpress
+  mysql_db:
+    name: wordpress
+    state: present
+
+- name: create wordpress user
+  mysql_user:
+    name: wordpressuser
+    password: Password1!
+    priv: 'wordpress.*:ALL,GRANT'
+    state: present
+
+- name: copy wp-config.php
+  copy:
+    src: wp-config.php
+    dest: /var/www/html/wordpress

@@ -1,0 +1,29 @@
+---
+# tasks file for roles/grafana
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: add grafana repository
+  yum_repository:
+    name: grafana
+    description: grafana
+    baseurl: https://packages.grafana.com/oss/rpm
+    repo_gpgcheck: yes
+    enabled: yes
+    gpgcheck: yes
+    gpgkey: https://packages.grafana.com/gpg.key
+    sslverify: yes
+    sslcacert: /etc/pki/tls/certs/ca-bundle.crt
+
+- name: install grafana
+  yum: 
+    name: grafana
+    state: present
+
+- name: copy grafana.ini
+  copy:
+    src: grafana.ini
+    dest: /etc/grafana/grafana.ini
+  notify: restart grafana

@@ -1,0 +1,38 @@
+---
+# tasks file for roles/elk
+
+- name: install java package
+  yum: 
+    name: java-1.8.0-openjdk
+    state: present
+
+- name: add elk repository
+  yum_repository:
+    name: elk
+    description: elk for 7.x packages
+    baseurl: https://artifacts.elastic.co/packages/7.x/yum
+    gpgcheck: yes
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    enabled: yes
+
+- name: install elasticsearch package
+  yum: 
+    name: elasticsearch
+    state: present
+
+- name: start elasticsearch
+  systemd:
+    name: elasticsearch
+    state: started
+    enabled: yes
+
+- name: install kibana package
+  yum: 
+    name: kibana
+    state: present
+
+- name: start kibana
+  systemd:
+    name: kibana
+    state: started
+    enabled: yes

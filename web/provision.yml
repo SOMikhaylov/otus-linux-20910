@@ -1,0 +1,17 @@
+---
+- name: install and configure mysql
+  hosts: all
+  become: true
+  
+  roles:
+    - mysql
+
+- name: install and configure webserver
+  hosts: all
+  become: true
+  
+  roles:
+    - nginx
+    - wordpress
+    - elk
+    - grafana

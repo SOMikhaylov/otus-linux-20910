@@ -1,0 +1,29 @@
+---
+# tasks file for roles/mysql
+- name: install percona repository
+  yum: 
+    name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+    state: present
+
+- name: install epel-release
+  yum: 
+    name: epel-release
+    state: present
+
+- name: install percona server
+  yum:
+    name:  Percona-Server-server-57
+    state: present
+
+- name: install PyMySQL
+  yum: 
+    name: python2-PyMySQL
+    state: present
+
+- name: start mysql service
+  systemd:
+    name: mysql
+    state: started
+    enabled: yes
+  notify: change root password
+
