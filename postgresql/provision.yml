@@ -1,0 +1,7 @@
+---
+- name: install and configure pgsql
+  hosts: all
+  become: true
+  
+  roles:
+    - pgsql

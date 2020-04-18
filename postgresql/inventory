@@ -1,0 +1,1 @@
+database ansible_host=127.0.0.1 ansible_port=62001 ansible_private_key_file=.vagrant/machines/database/virtualbox/private_key
