@@ -1,0 +1,34 @@
+---
+# tasks file for roles/barman
+
+- name: check if install barman repo
+  stat:
+    path: /etc/yum.repos.d/2ndquadrant-dl-default-release-pg9.6.repo
+  register: barman_repo
+  
+- name: instal barman repo
+  shell: curl https://dl.2ndquadrant.com/default/release/get/9.6/rpm | sudo bash
+  when: not barman_repo.stat.exists
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: instal epel-release
+  yum:
+    name: epel-release
+    state: present
+
+- name: install barman
+  yum:
+    name: barman
+    state: present
+
+- name: create directory .ssh
+  file:
+    path: /var/lib/barman/.ssh
+    state: directory
+    mode: 0700
+    group: barman
+    owner: barman
+

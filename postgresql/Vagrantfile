@@ -2,12 +2,27 @@
 # vim: set ft=ruby :
 
 MACHINES = {
-    :database => {
+    :master => {
         :box_name => "centos/8",
         :fwd => [
               {guest: 22, host: 62001},
         ],
-      }
+        :ip_addr => '192.168.1.100',
+      },
+    :slave => {
+      :box_name => "centos/8",
+      :fwd => [
+            {guest: 22, host: 62002},
+      ],
+      :ip_addr => '192.168.1.200',
+    },
+    :barman => {
+      :box_name => "centos/7",
+      :fwd => [
+            {guest: 22, host: 62003},
+      ],
+      :ip_addr => '192.168.1.150',
+    },
 }
 
 
@@ -20,6 +35,7 @@ Vagrant.configure("2") do |config|
           box.vm.box = boxconfig[:box_name]
           box.vm.host_name = boxname.to_s
 
+          box.vm.network "private_network", ip: boxconfig[:ip_addr]
 
           boxconfig[:fwd].each do |port|
             box.vm.network "forwarded_port", port
@@ -29,9 +45,13 @@ Vagrant.configure("2") do |config|
             box.vm.network "public_network", boxconfig[:public]
           end
           
-          box.vm.provision "ansible" do |ansible|
-            ansible.playbook = "provision.yml"
-          end
+          # box.vm.provision "ansible" do |ansible|
+          #   ansible.playbook = "provision.yml"
+          #   ansible.groups = {
+          #     "db" => ["master", "slave"],
+          #     "backup" => ["barman"],
+          #   }
+          # end
 
       end
   end
