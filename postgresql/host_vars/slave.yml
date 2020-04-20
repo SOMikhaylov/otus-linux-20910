@@ -2,4 +2,6 @@ type: slave
 
 conf:
   - src: slave/postgresql.conf
-    dest: /var/lib/pgsql/data/postgresql.conf
+    dest: /var/lib/pgsql/9.6/data/postgresql.conf
+  - src: slave/pg_hba.conf
+    dest: /var/lib/pgsql/9.6/data/pg_hba.conf

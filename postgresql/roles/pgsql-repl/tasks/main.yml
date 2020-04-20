@@ -1,12 +1,57 @@
 ---
 # tasks file for roles/pgsql
 
+- name: Update hosts file
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+  with_items:
+    - "192.168.1.100 master"
+    - "192.168.1.200 slave"
+    - "192.168.1.150 backup"
+    
+- name: install epel-release
+  yum: 
+    name: epel-release
+    state: present
+
+- name: check postgresql repo
+  stat:
+    path: /etc/yum.repos.d/pgdg-redhat-all.repo
+  register: pgsql_repo
+
+- name: install pgsql repo
+  yum:
+    name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+  when: not pgsql_repo.stat.exists
+
+- name: Exclude barman from PostgreSQL repo
+  lineinfile:
+    path: /etc/yum.repos.d/pgdg-redhat-all.repo
+    line: exclude=barman*
+    state: present
+
+- name: check barman repo
+  stat:
+    path: /etc/yum.repos.d/2ndquadrant-dl-default-release-pg9.6.repo 
+  register: barman_repo
+
+- name: Install Barman repo
+  shell: curl https://dl.2ndquadrant.com/default/release/get/9.6/rpm | sudo bash
+  when: not barman_repo.stat.exists
+
 - name: install packages
-  dnf:
+  yum:
     name: 
-      - '@postgresql:9.6'
+      - postgresql96-server
+      - postgresql96
+      - barman
+      - barman-cli
       - unzip
-      - python3-pip
+      - python-pip
+      - postgresql-libs
+      - python-psycopg2
     state: present
 
 - name: install pip packages
@@ -18,23 +63,23 @@
   selinux:
     state: disabled
 
+
 - name: check if pgsql db is initialized.
   stat:
-    path: /var/lib/pgsql/data/PG_VERSION
+    path: /var/lib/pgsql/9.6/data/PG_VERSION
   register: pgdata_dir_version
 
 - name: initialized pgsql db
-  shell: postgresql-setup --initdb
+  shell: /usr/pgsql-9.6/bin/postgresql96-setup initdb
   when: not pgdata_dir_version.stat.exists
 
 - name: start postgresql service
   systemd:
-    name: postgresql
+    name: postgresql-9.6
     state: started
     enabled: yes
 
-# replication
-
+# repl
 - name: create user replication
   become_user: postgres
   postgresql_user:
@@ -59,19 +104,12 @@
     owner: postgres
     mode: 0700
 
-- name: set authorized keys
-  openssh_keypair:
-    path: /var/lib/pgsql/.ssh/id_rsa
-    group: postgres
-    owner: postgres
-
-- name: copy pgpass
+- name: copy keys
   copy:
-    src: pgpass
-    dest: /var/lib/pgsql/.pgpass
-    owner: postgres
+    src: keys/
+    dest: /var/lib/pgsql/.ssh
     group: postgres
-    mode: 0600
+    owner: postgres
 
 - name: copy conf on master
   copy:
@@ -86,29 +124,52 @@
 
 - name: restart postgresql service
   systemd:
-    name: postgresql
+    name: postgresql-9.6
     state: restarted
     enabled: yes
 
 - name: stop pgsql service on slave
   systemd:
-    name: postgresql
+    name: postgresql-9.6
     state: stopped
   when: type is defined and type == "slave"
 
 - name: remove pgdata directory on slave
   file:
-    path: /var/lib/pgsql/data
+    path: /var/lib/pgsql/9.6/data
     state: absent
   when: type is defined and type == "slave"
 
 - name: copy db from master to slave
   become_user: postgres
-  shell: pg_basebackup -h 192.168.1.100 -D /var/lib/pgsql/data/ -R -P -U replication --xlog-method=stream
+  shell: pg_basebackup -h master -D /var/lib/pgsql/9.6/data/ -R -P -U replication
   when: type is defined and type == "slave"
 
 - name: start pgsql service on slave
   systemd:
-    name: postgresql
+    name: postgresql-9.6
     state: started
   when: type is defined and type == "slave"
+
+# backup
+
+- name: Create directory .ssh barman
+  file:
+    path: /var/lib/barman/.ssh
+    state: directory
+    group: barman
+    owner: barman
+
+- name: copy keys barman
+  copy:
+    src: keys/
+    dest: /var/lib/barman/.ssh
+    group: barman
+    owner: barman
+    mode: 0600
+
+- name: copy barman conf
+  copy:
+    src: barman.conf
+    dest: /etc/barman.conf
+  when: type is defined and type == "backup"

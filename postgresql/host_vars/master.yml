@@ -2,7 +2,8 @@ type: master
 
 conf:
   - src: master/postgresql.conf
-    dest: /var/lib/pgsql/data/postgresql.conf
+    dest: /var/lib/pgsql/9.6/data/postgresql.conf
   - src: master/pg_hba.conf
-    dest: /var/lib/pgsql/data/pg_hba.conf
+    dest: /var/lib/pgsql/9.6/data/pg_hba.conf
+
     

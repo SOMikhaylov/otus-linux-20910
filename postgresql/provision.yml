@@ -1,14 +1,7 @@
 ---
 - name: install and configure pgsql
-  hosts: db
+  hosts: all
   become: true
   
   roles:
     - pgsql-repl
-
-- name: install and configure barman
-  hosts: backup
-  become: true
-  
-  roles:
-    - barman

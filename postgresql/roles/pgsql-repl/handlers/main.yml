@@ -6,3 +6,4 @@
     name: postgresql
     state: restarted
     enabled: yes
+
