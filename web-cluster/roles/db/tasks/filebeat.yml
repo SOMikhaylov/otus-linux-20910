@@ -1,0 +1,18 @@
+
+- name: copy filebeat conf 
+  template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+  notify: restart filebeat
+
+- name: copy filebeat conf for nginx
+  template:
+    src: filebeat-mysql.yml.j2
+    dest: /etc/filebeat/modules.d/mysql.yml
+  notify: restart filebeat
+
+- name: copy filebeat conf for system
+  template:
+    src: filebeat-system.yml.j2
+    dest: /etc/filebeat/modules.d/system.yml
+  notify: restart filebeat

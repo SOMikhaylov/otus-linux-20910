@@ -47,3 +47,7 @@
 * [Домашнее задание 29 - Vagrant стенд для NFS или SAMBA.](share/)
 
 ---
+
+## Финальный проект
+
+* [web-cluster](web-cluster/)

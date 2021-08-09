@@ -1,0 +1,24 @@
+! Configuration File for keepalived
+
+vrrp_script chk_haproxy {
+  script "killall -0 haproxy"
+  interval 2
+  weight 2
+}
+
+vrrp_instance VI_1 {
+  interface eth1
+  state {{ cluster_node_state }}
+  virtual_router_id 1
+  priority 100
+  virtual_ipaddress {
+    192.168.1.100
+  }
+  track_script {
+    chk_haproxy
+  }
+  authentication {
+    auth_type PASS
+    auth_pass 111
+  }
+}

@@ -1,0 +1,7 @@
+---
+# tasks file for roles/log
+
+- include_tasks: install.yml
+  when: ansible_os_family == 'RedHat'
+
+- include_tasks: configure.yml

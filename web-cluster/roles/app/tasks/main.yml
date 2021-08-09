@@ -1,0 +1,17 @@
+---
+# tasks file for roles/dbproxy
+
+- include_tasks: install.yml
+  when: ansible_os_family == 'RedHat'
+
+- include_tasks: configure.yml
+
+- include_tasks: proxysql.yml
+
+- include_tasks: glusterfs.yml
+
+- include_tasks: wordpress.yml
+
+- include_tasks: filebeat.yml
+
+- include_tasks: firewalld.yml

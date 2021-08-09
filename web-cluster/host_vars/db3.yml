@@ -1,0 +1,7 @@
+interfaces:
+    eth1:
+        ip: 192.168.1.13
+
+cluster_node_state: slave
+
+logstash_host: log1

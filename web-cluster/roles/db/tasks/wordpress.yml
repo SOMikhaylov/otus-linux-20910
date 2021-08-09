@@ -1,0 +1,14 @@
+- name: create db wordpress
+  mysql_db:
+    name: wordpress
+    state: present
+  run_once: true
+
+- name: create wordpress user
+  mysql_user:
+    name: '{{ wordpress_user }}'
+    password: '{{ wordpress_password }}'
+    priv: 'wordpress.*:ALL,GRANT'
+    host: '%'
+    state: present
+  run_once: true

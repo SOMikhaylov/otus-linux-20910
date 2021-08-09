@@ -1,0 +1,34 @@
+
+- name: start mysql service
+  systemd:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: check if exist /root/.my.cnf
+  stat:
+    path: /root/.my.cnf
+  register: root_my_cnf
+
+- name: get initial mysql passwd
+  shell: "cat /var/log/mysqld.log | grep 'root@localhost:' | awk '{print $11}'"
+  register: init_pass
+  when: not root_my_cnf.stat.exists
+
+- name: change root password
+  shell: "echo \"ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_passwd }}'; FLUSH PRIVILEGES;\" | mysql -u root --password='{{ init_pass.stdout }}' --connect-expired-password"
+  when: 
+    - mysql_root_passwd is defined
+    - not root_my_cnf.stat.exists
+
+- name: copy password to ~/.my.cnf
+  copy:
+    content: |
+        [client]
+        user=root
+        password='{{ mysql_root_passwd }}'
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: 0644
+  when: mysql_root_passwd is defined

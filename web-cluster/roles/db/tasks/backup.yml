@@ -1,0 +1,14 @@
+
+- name: copy full_backup script
+  copy:
+    src: full_backup.sh
+    dest: /root/full_backup.sh
+    mode: 0775
+
+- name: copy inc_backup script
+  copy:
+    src: inc_backup.sh
+    dest: /root/inc_backup.sh
+    mode: 0775
+
+

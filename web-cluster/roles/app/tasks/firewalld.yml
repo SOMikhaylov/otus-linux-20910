@@ -1,0 +1,22 @@
+- name: start firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: firewalld add services
+  firewalld:
+    service: '{{ item }}'
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop:
+    - http
+    - glusterfs
+
+- name: firewalld open port 8080
+  firewalld:
+    port: 8080/tcp
+    permanent: yes
+    immediate: yes
+    state: enabled

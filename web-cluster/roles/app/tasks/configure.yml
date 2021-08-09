@@ -1,0 +1,11 @@
+- name: copy php fpm config
+  copy:
+    src: php-fpm.conf
+    dest: /etc/php-fpm.d/www.conf
+  notify: restart php-fpm
+
+- name: copy config nginx php
+  template:
+    src: nginx-php.conf.j2
+    dest: /etc/nginx/conf.d/php.conf
+  notify: restart nginx

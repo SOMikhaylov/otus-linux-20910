@@ -1,0 +1,12 @@
+mysql_root_passwd: Password1!
+
+pxc_hosts: db1,db2,db3
+
+xtradb_sst_user: sstuser
+xtradb_sst_password: Passw0rd
+
+monitor_user: monitor
+monitor_password: monitor
+
+wordpress_user: wordpressuser
+wordpress_password: Password1! 

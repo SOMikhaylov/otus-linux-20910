@@ -1,0 +1,70 @@
+- name: check if cluster configured 
+  stat:
+    path: /var/lib/mysql/_cluster
+  register: _cluster
+
+- name: stop mysql service
+  systemd:
+    name: mysql
+    state: stopped
+    enabled: yes
+  when: not _cluster.stat.exists
+
+- name: copy percona xtradb cluster conf
+  template:
+    src: wsrep.cnf.j2
+    dest: /etc/percona-xtradb-cluster.conf.d/wsrep.cnf
+  when: not _cluster.stat.exists
+
+- name: start bootstrap master node
+  systemd: 
+    name: mysql@bootstrap.service
+    state: started
+  when: 
+    - cluster_node_state  == "master"
+    - not _cluster.stat.exists
+
+- name: create SST user
+  mysql_user:
+    user: "{{ xtradb_sst_user }}"
+    password: "{{ xtradb_sst_password }}"
+    priv: "*.*:grant,reload,lock tables,process,replication client"
+  when: 
+    - cluster_node_state  == "master"
+    - not _cluster.stat.exists
+
+- name: start mysql on slave node
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+  when: 
+    - cluster_node_state  == "slave"
+    - not _cluster.stat.exists
+
+- name: stop bootstrap master node
+  systemd: 
+    name: mysql@bootstrap.service
+    state: stopped
+  when: 
+    - cluster_node_state  == "master"
+    - not _cluster.stat.exists
+
+- name: start mysql on master node
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+  when: 
+    - cluster_node_state  == "master"
+    - not _cluster.stat.exists
+
+- name: marking as cluster configured 
+  file:
+    path: "/var/lib/mysql/_cluster"
+    state: "touch"
+    owner: root
+    group: root
+    mode: '0400'
+  when:
+    - not _cluster.stat.exists

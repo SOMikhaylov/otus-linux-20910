@@ -1,0 +1,33 @@
+---
+# tasks file for roles/preconfigure
+- name: install epel-release
+  yum:
+    name: epel-release
+    state: present
+
+- name: install python3 packages
+  yum:
+    name: 
+      - python3
+      - python3-policycoreutils
+    state: present
+
+- name: set python3 for default
+  alternatives:
+    name: python
+    path: /usr/bin/python3
+
+- name: Disable SELinux
+  selinux:
+    state: disabled
+
+- name: generate /etc/hosts
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+
+- name: stop firewalld
+  systemd:
+    name: firewalld
+    state: stopped
+    

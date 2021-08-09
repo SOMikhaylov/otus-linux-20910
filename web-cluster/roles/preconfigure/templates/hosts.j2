@@ -1,0 +1,11 @@
+# templates/hosts.j2
+# {{ ansible_managed }}
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+# Network nodes as generated through Ansible.
+{% for host in play_hosts %}
+{% if 'interfaces' in hostvars[host] %}
+{{ hostvars[host]['interfaces']['eth1']['ip'] }}  {{ host }}
+{% endif %}
+{% endfor %}

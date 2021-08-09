@@ -1,0 +1,17 @@
+[mysqld]
+wsrep_provider=/usr/lib64/galera3/libgalera_smm.so
+
+wsrep_cluster_name=pxc-cluster
+wsrep_cluster_address=gcomm://{{ pxc_hosts }}
+
+wsrep_node_name={{ inventory_hostname }}
+wsrep_node_address={{ inventory_hostname }}
+
+wsrep_sst_method=xtrabackup-v2
+wsrep_sst_auth=sstuser:Passw0rd
+
+pxc_strict_mode=ENFORCING
+
+binlog_format=ROW
+default_storage_engine=InnoDB
+innodb_autoinc_lock_mode=2

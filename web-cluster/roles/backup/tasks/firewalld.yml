@@ -1,0 +1,16 @@
+- name: start firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: firewalld add nfs services
+  firewalld:
+    service: '{{ item }}'
+    permanent: yes
+    immediate: yes
+    state: enabled
+  loop:
+    - nfs
+    - mountd
+    - rpc-bind

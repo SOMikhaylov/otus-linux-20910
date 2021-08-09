@@ -1,0 +1,19 @@
+- name: start firewalld
+  systemd:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: firewalld open port 5601
+  firewalld:
+    port: 5601/tcp
+    permanent: yes
+    immediate: yes
+    state: enabled
+
+- name: firewalld open port 5044
+  firewalld:
+    port: 5044/tcp
+    permanent: yes
+    immediate: yes
+    state: enabled

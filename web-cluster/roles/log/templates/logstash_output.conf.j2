@@ -1,0 +1,6 @@
+output {
+    elasticsearch { 
+        hosts => ["{{ elastic_host }}:9200"] 
+        index => "%{[@metadata][beat]}-%{[@metadata][version]}"
+    }
+}

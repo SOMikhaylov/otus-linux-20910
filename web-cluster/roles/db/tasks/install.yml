@@ -1,0 +1,38 @@
+- name: install percona repository
+  yum: 
+    name: https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+    state: present
+
+- name: disable default mysql module
+  copy:
+    content: |
+      [mysql]
+      name=mysql
+      profiles=
+      state=disabled
+      stream=
+    dest: /etc/dnf/modules.d/mysql.module
+  when: ansible_distribution_version|int >= 8
+
+- name: add elk repository
+  yum_repository:
+    name: elk
+    description: elk for 7.x packages
+    baseurl: https://artifacts.elastic.co/packages/7.x/yum
+    gpgcheck: yes
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    enabled: yes
+
+- name: install packages
+  yum:
+    name:  
+      - Percona-XtraDB-Cluster-57
+      - filebeat
+      - nfs-utils 
+      - nfs4-acl-tools
+    state: present
+
+- name: pip install PyMySQL module
+  pip: 
+    name: PyMySQL
+    state: present

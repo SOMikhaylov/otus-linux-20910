@@ -1,0 +1,29 @@
+
+- name: download and extract wordpress
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: '{{ app_directory }}/'
+    remote_src: yes
+  run_once: true
+
+- name: add user wordpress in proxysql
+  proxysql_mysql_users:
+    login_user: 'admin'
+    login_password: 'admin'
+    username: '{{ wordpress_user }}'
+    password: '{{ wordpress_password }}'
+    state: present
+
+- name: copy wp-config
+  synchronize:
+    src: wp-config.php
+    dest: '{{ app_directory }}/wordpress/'
+    owner: yes
+  run_once: true  
+
+- name: set permissions
+  file:
+    path: '{{ app_directory }}/wordpress/'
+    owner: nginx
+    group: nginx
+    mode: '0755'

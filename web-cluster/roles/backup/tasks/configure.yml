@@ -1,0 +1,13 @@
+
+- name: create nfs share
+  file:
+    path: '{{ nfs_share_directory }}'
+    state: directory
+    mode: 0775
+    
+
+- name: copy /etc/exports
+  template: 
+    src: exports.j2
+    dest: /etc/exports
+  notify: restart nfs

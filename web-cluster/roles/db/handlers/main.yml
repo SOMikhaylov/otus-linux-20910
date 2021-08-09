@@ -1,0 +1,14 @@
+---
+# handlers file for roles/db
+
+- name: restart mysql
+  systemd:
+    name: mysql
+    state: restarted
+    enabled: yes
+
+- name: restart filebeat
+  systemd:
+    name: filebeat
+    state: restarted
+    enabled: yes

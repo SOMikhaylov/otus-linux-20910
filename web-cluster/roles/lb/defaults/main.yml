@@ -1,0 +1,6 @@
+---
+# defaults file for roles/lb
+
+port: '8080'
+username: 'stat'
+password: 'statpass'

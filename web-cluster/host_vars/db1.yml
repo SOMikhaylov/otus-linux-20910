@@ -1,0 +1,7 @@
+interfaces:
+    eth1:
+        ip: 192.168.1.11
+
+cluster_node_state: master
+
+logstash_host: log1

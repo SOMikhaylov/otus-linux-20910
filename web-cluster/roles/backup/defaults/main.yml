@@ -1,0 +1,4 @@
+---
+# defaults file for roles/backup
+
+nfs_share_directory: /backup

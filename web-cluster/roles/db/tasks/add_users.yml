@@ -1,0 +1,9 @@
+
+- name: add user monitor
+  mysql_user:
+    name: '{{ monitor_user }}'
+    password: '{{ monitor_password }}'
+    host: '%'
+    priv: '*.*:ALL'
+    state: present
+  run_once: true

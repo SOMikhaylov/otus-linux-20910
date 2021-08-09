@@ -1,0 +1,7 @@
+---
+# defaults file for roles/log
+
+kibana_port: 5601
+beat_port: 5044
+
+elastic_host: 127.0.0.1

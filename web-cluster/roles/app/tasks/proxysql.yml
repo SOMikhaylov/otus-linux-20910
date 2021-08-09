@@ -1,0 +1,40 @@
+- name: start proxysql
+  systemd:
+    name: proxysql
+    state: started
+    enabled: yes
+
+- name: copy password to ~/.my.cnf
+  copy:
+    content: |
+        [client]
+        user=admin
+        password=admin
+        bind-address=127.0.0.1
+        host=127.0.0.1
+        port=6032
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: add cluster node db1
+  proxysql_backend_servers:
+    login_user: 'admin'
+    login_password: 'admin'
+    hostname: 'db1'
+    state: present
+
+- name: add cluster node db2
+  proxysql_backend_servers:
+    login_user: 'admin'
+    login_password: 'admin'
+    hostname: 'db2'
+    state: present
+
+- name: add cluster node db3
+  proxysql_backend_servers:
+    login_user: 'admin'
+    login_password: 'admin'
+    hostname: 'db3'
+    state: present

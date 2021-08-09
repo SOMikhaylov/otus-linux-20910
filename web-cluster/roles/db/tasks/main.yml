@@ -1,0 +1,19 @@
+---
+# tasks file for roles/db
+
+- include_tasks: install.yml
+  when: ansible_os_family == 'RedHat'
+
+- include_tasks: initialize.yml
+
+- include_tasks: bootstrap.yml
+
+- include_tasks: add_users.yml
+
+- include_tasks: wordpress.yml
+
+- include_tasks: filebeat.yml
+
+- include_tasks: firewalld.yml
+
+- include_tasks: backup.yml

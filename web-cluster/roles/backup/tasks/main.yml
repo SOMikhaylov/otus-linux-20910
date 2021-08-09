@@ -1,0 +1,9 @@
+---
+# tasks file for roles/backup
+
+- include_tasks: install.yml
+  when: ansible_os_family == 'RedHat'
+
+- include_tasks: configure.yml
+
+- include_tasks: firewalld.yml
